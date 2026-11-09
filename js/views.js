@@ -4,6 +4,8 @@ import * as L from './logic.js';
 import * as W from './workout.js';
 import { chart, ring } from './charts.js';
 import { esc, icon, toast, openModal, confirmDialog, num } from './ui.js';
+import { openAddFood } from './addfood.js';
+import * as F from './food.js';
 
 let rerender = () => {};
 export function setRerender(fn) { rerender = fn; }
@@ -354,8 +356,8 @@ export function nutrition(el) {
 
     <section class="card">
       <div class="rings">
-        ${ring({ value: tot.kcal, max: s.settings.kcal, size: 150, stroke: 12, center: L.fmtInt(Math.abs(s.settings.kcal - tot.kcal)), sub: tot.kcal > s.settings.kcal ? 'kcal over' : 'kcal left' })}
-        ${ring({ value: tot.protein, max: s.settings.protein, size: 150, stroke: 12, center: `${L.fmtInt(tot.protein)}g`, sub: `of ${s.settings.protein}g protein` })}
+        ${ring({ value: tot.kcal, max: s.settings.kcal, size: 132, stroke: 11, center: L.fmtInt(Math.abs(s.settings.kcal - tot.kcal)), sub: tot.kcal > s.settings.kcal ? 'kcal over' : 'kcal left' })}
+        ${ring({ value: tot.protein, max: s.settings.protein, size: 132, stroke: 11, center: `${L.fmtInt(tot.protein)}g`, sub: `of ${s.settings.protein}g protein` })}
         <div class="macros">
           <div class="stat"><div class="v num">${L.fmtInt(tot.kcal)}<small>/ ${L.fmtInt(s.settings.kcal)} kcal</small></div><div class="l">eaten</div></div>
           ${macroBar('Protein', tot.protein, s.settings.protein, 'g')}
@@ -366,9 +368,20 @@ export function nutrition(el) {
       </div>
     </section>
 
+    <section class="card section quicklog">
+      <button class="ql-search" data-open="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search any food or brand…</span></button>
+      <div class="ql-actions">
+        <button data-open="scan"><svg viewBox="0 0 24 24"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M7 8v8M10 8v8M13 8v8M16 8v8"/></svg>Scan</button>
+        <button data-open="photo"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Photo AI</button>
+        <button data-open="voice"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Speak</button>
+        <button data-open="manual"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>Manual</button>
+      </div>
+      ${F.recents(8).length ? `<div class="ql-chips">${F.recents(8).map((c) => `<button class="pill" data-qa="${esc(c.key)}">${c.fav ? '★ ' : ''}${esc(c.name.length > 26 ? `${c.name.slice(0, 24)}…` : c.name)}</button>`).join('')}</div>` : ''}
+    </section>
+
     <div class="grid two section" style="align-items:start">
       <section class="card">
-        <div class="card-head"><h3>Meals</h3><button class="btn sm primary" data-add="Snacks">${icon.plus} Add food</button></div>
+        <div class="card-head"><h3>Meals</h3><button class="btn sm primary" data-add="">${icon.plus} Add food</button></div>
         ${L.MEALS.map((m) => {
           const mi = items.filter((f) => f.meal === m);
           const lm = mi.length ? null : L.lastMeal(m, d);
@@ -404,8 +417,14 @@ export function nutrition(el) {
             data: week.map((k) => { const v = L.dayTotals(k).protein; return { label: L.dayShort(L.weekdayOf(k)), value: v || null, dim: k !== d, tip: `${L.fmtShort(k)}: ${v ? `${L.fmtInt(v)} g protein` : 'nothing logged'}` }; }) })}
         </section>
         <section class="card">
-          <div class="card-head"><h3>My foods</h3><span class="tiny muted">${s.library.length} saved</span></div>
-          <div class="list">${s.library.slice(0, 8).map((f) => `<div class="list-item small"><div style="flex:1;min-width:0">${esc(f.name)}<div class="tiny muted">${esc(f.qty)} · ${L.fmtInt(f.kcal)} kcal · ${L.fmtInt(f.protein)} g P</div></div><button class="x-btn" data-unlib="${f.id}" aria-label="Delete ${esc(f.name)} from my foods">×</button></div>`).join('')}</div>
+          <div class="card-head"><h3>My foods</h3><span class="tiny muted">${s.library.length} saved · ★ = favourite</span></div>
+          <div class="list">${F.recents(10).map((c) => {
+            const p = c.per100 ? F.portion(c, c.serving ? 1 : 100, c.serving ? 'serving' : 'g') : F.portion(c, 1, 'serving');
+            return `<div class="list-item small">
+              <button class="star-btn ${c.fav ? 'on' : ''}" data-star="${c.id}" aria-label="${c.fav ? 'Unfavourite' : 'Favourite'} ${esc(c.name)}">★</button>
+              <div style="flex:1;min-width:0">${esc(c.name)}<div class="tiny muted">${esc(p.qty)} · ${p.kcal} kcal · ${L.fmtInt(p.protein)} g P</div></div>
+              <button class="x-btn" data-unlib="${c.id}" aria-label="Delete ${esc(c.name)} from my foods">×</button></div>`;
+          }).join('') || '<p class="tiny muted">Foods you log are saved here automatically.</p>'}</div>
         </section>
       </div>
     </div>`;
@@ -415,7 +434,17 @@ export function nutrition(el) {
     ui.foodDate = n === 0 ? t : L.addDays(d, n) > t ? t : L.addDays(d, n);
     rerender();
   }));
-  el.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => foodModal(d, b.dataset.add)));
+  const openSheet = (opts) => openAddFood({ date: d, onChange: rerender, ...opts });
+  el.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => openSheet({ meal: b.dataset.add || undefined })));
+  el.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openSheet({ start: b.dataset.open })));
+  el.querySelectorAll('[data-qa]').forEach((b) => b.addEventListener('click', () => {
+    const c = F.myFoods().find((x) => x.key === b.dataset.qa);
+    if (c) openSheet({ start: c });
+  }));
+  el.querySelectorAll('[data-star]').forEach((b) => b.addEventListener('click', () => {
+    update((st) => { const f = st.library.find((x) => x.id === b.dataset.star); if (f) f.fav = !f.fav; });
+    rerender();
+  }));
   el.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
     update((st) => { st.foods[d] = st.foods[d].filter((f) => f.id !== b.dataset.rm); });
     rerender();
@@ -434,70 +463,6 @@ export function nutrition(el) {
     update((st) => { st.library = st.library.filter((f) => f.id !== b.dataset.unlib); });
     rerender();
   }));
-}
-
-function foodModal(date, meal) {
-  const s = get();
-  openModal(`
-    <h2>Add food</h2>
-    <div class="form">
-      <label class="field">Meal
-        <select data-meal>${L.MEALS.map((m) => `<option ${m === meal ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
-      <input type="search" placeholder="Search my foods…" data-q aria-label="Search my foods">
-      <div class="row small muted"><span>Servings</span><input type="number" step="0.25" min="0.25" value="1" data-mult style="width:90px" aria-label="Servings"></div>
-      <div data-lib class="stack" style="gap:2px;max-height:220px;overflow-y:auto"></div>
-      <details>
-        <summary class="btn sm ghost" style="list-style:none">${icon.plus} New food</summary>
-        <form class="form" style="margin-top:12px" data-custom>
-          <div class="cols two">
-            <label class="field">Name<input type="text" name="name" required placeholder="Greek yoghurt"></label>
-            <label class="field">Amount<input type="text" name="qty" placeholder="200 g"></label>
-          </div>
-          <div class="cols">
-            <label class="field">kcal<input type="number" name="kcal" min="0" inputmode="decimal" required></label>
-            <label class="field">Protein g<input type="number" name="protein" min="0" step="0.1" inputmode="decimal"></label>
-            <label class="field">Carbs g<input type="number" name="carbs" min="0" step="0.1" inputmode="decimal"></label>
-            <label class="field">Fat g<input type="number" name="fat" min="0" step="0.1" inputmode="decimal"></label>
-          </div>
-          <label class="check"><input type="checkbox" name="save" checked> Save to my foods</label>
-          <button class="btn primary">Add</button>
-        </form>
-      </details>
-    </div>
-    <div class="sheet-actions"><button class="btn ghost" data-close>Done</button></div>`, (sheet) => {
-    const q = sheet.querySelector('[data-q]');
-    const lib = sheet.querySelector('[data-lib]');
-    const mealSel = sheet.querySelector('[data-meal]');
-    const mult = sheet.querySelector('[data-mult]');
-    const add = (f) => {
-      const m = num(mult.value) || 1;
-      const scale = (v) => (v == null ? null : Math.round(v * m * 10) / 10);
-      update((st) => {
-        (st.foods[date] ||= []).push({ id: uid(), meal: mealSel.value, name: f.name, qty: m === 1 ? f.qty : `${m} × ${f.qty || 'serving'}`, kcal: scale(+f.kcal), protein: scale(f.protein), carbs: scale(f.carbs), fat: scale(f.fat) });
-      });
-      toast(`Added ${f.name}`);
-      rerender();
-    };
-    const draw = () => {
-      const term = q.value.trim().toLowerCase();
-      const list = s.library.filter((f) => f.name.toLowerCase().includes(term));
-      lib.innerHTML = list.length ? list.map((f) => `<button class="lib-item" data-id="${f.id}"><div style="flex:1;min-width:0"><strong class="small">${esc(f.name)}</strong><div class="tiny muted">${esc(f.qty)} · ${L.fmtInt(f.protein)} g protein</div></div><span class="num small">${L.fmtInt(f.kcal)} kcal</span><span class="pill accent">+</span></button>`).join('')
-        : '<p class="tiny muted">No saved foods match. Add a new one below.</p>';
-      lib.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => add(s.library.find((f) => f.id === b.dataset.id))));
-    };
-    q.addEventListener('input', draw);
-    draw();
-    const form = sheet.querySelector('[data-custom]');
-    form.addEventListener('submit', (ev) => {
-      ev.preventDefault();
-      const f = { id: uid(), name: form.name.value.trim(), qty: form.qty.value.trim(), kcal: num(form.kcal.value) || 0, protein: num(form.protein.value) ?? 0, carbs: num(form.carbs.value) ?? 0, fat: num(form.fat.value) ?? 0 };
-      if (!f.name) return;
-      if (form.save.checked) update((st) => { st.library.unshift(f); });
-      add(f);
-      form.reset(); form.save.checked = true;
-      draw();
-    });
-  });
 }
 
 /* ======================================================= PROGRESS */
@@ -697,6 +662,17 @@ export function settings(el) {
           </div>
         </section>
         <section class="card">
+          <h3>AI food estimates</h3>
+          <p class="sub small" style="margin-bottom:12px">Photo AI and full-sentence voice logging use Claude through your own Anthropic API key. Get one at console.anthropic.com → API keys. It stays on this device and is never included in backups. Each estimate costs roughly 2–4 cents.</p>
+          ${F.aiKey() ? `
+            <p class="small" style="margin:0 0 10px">✓ Key saved (…${esc(F.aiKey().slice(-4))})</p>
+            <button class="btn danger" data-aikey-rm>Remove key</button>`
+          : `<div class="row" style="gap:8px">
+              <input type="password" data-aikey placeholder="sk-ant-…" autocomplete="off" aria-label="Anthropic API key">
+              <button class="btn primary" data-aikey-save>Save</button>
+            </div>`}
+        </section>
+        <section class="card">
           <h3>Install Finn Fit</h3>
           <p class="sub small">On iPhone, open this page in Safari, tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. It opens full-screen like an app.</p>
         </section>
@@ -718,6 +694,14 @@ export function settings(el) {
     });
   });
   el.querySelector('[data-export]').addEventListener('click', () => { downloadBackup(); rerender(); });
+  el.querySelector('[data-aikey-save]')?.addEventListener('click', () => {
+    const k = el.querySelector('[data-aikey]').value.trim();
+    if (!k.startsWith('sk-ant-')) { toast('That doesn\'t look like an Anthropic key (starts with sk-ant-)'); return; }
+    F.setAiKey(k); toast('AI estimates switched on'); rerender();
+  });
+  el.querySelector('[data-aikey-rm]')?.addEventListener('click', async () => {
+    if (await confirmDialog('Remove API key?', 'Photo AI and sentence-style voice logging will switch off until you add a key again.', 'Remove', true)) { F.setAiKey(''); rerender(); }
+  });
   el.querySelector('[data-import]').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;

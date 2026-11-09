@@ -355,3 +355,73 @@ input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-app
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- add food sheet ---------- */
+.sheet.sheet-tall { width: min(560px, 100%); min-height: min(80vh, 680px); }
+@media (max-width: 560px) { .sheet.sheet-tall { min-height: 88vh; } }
+.af-meals { width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); margin-bottom: 12px; }
+.af-meals button { padding: 7px 4px; }
+.af-search input { font-size: 16px; padding: 13px 14px; border-radius: 14px; }
+.af-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.af-actions button, .ql-actions button {
+  display: grid; justify-items: center; gap: 4px; padding: 10px 4px; border-radius: 14px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line-2); color: var(--ink); font-weight: 700; font-size: 12px;
+}
+.af-actions button:active, .ql-actions button:active { transform: scale(0.97); }
+.af-actions svg, .ql-actions svg, .ql-search svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.af-list { display: grid; gap: 2px; grid-template-columns: minmax(0, 1fr); }
+.af-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.af-main { flex: 1; min-width: 0; text-align: left; background: none; border: 0; color: var(--ink); padding: 8px 2px; cursor: pointer; }
+.af-main strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.af-main > span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.af-kcal { font-weight: 800; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.af-kcal small { color: var(--muted); font-weight: 600; }
+.af-add { width: 36px; height: 36px; flex: none; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; font-weight: 800; }
+.af-add svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+.af-add.done { background: var(--panel-3); color: var(--accent); }
+.af-src { font-weight: 700; }
+.af-src.off { color: #8fc9e6; }
+.af-src.generic { color: var(--ink-2); }
+.af-src.mine { color: var(--accent); }
+.af-src.ai { color: #d9a8f0; }
+.af-loading { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; margin: 14px 2px; }
+.af-loading::before { content: ''; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.af-amount { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.af-amount input { width: 110px; font-size: 22px; font-weight: 800; text-align: center; }
+.af-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 14px; }
+.af-macros div { background: var(--panel-2); border-radius: 12px; padding: 10px 6px; text-align: center; }
+.af-macros strong { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.af-macros span { font-size: 11px; color: var(--muted); }
+.fav-on { color: var(--warn); border-color: var(--warn); }
+.fav-on svg { fill: var(--warn); }
+.af-video { position: relative; margin-top: 10px; border-radius: 16px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+.af-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.af-frame { position: absolute; inset: 28% 12%; border: 2px solid var(--accent); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35); }
+.af-thumb { width: 100%; max-height: 220px; object-fit: cover; border-radius: 14px; margin-top: 10px; display: block; }
+.af-mic { display: grid; place-items: center; width: 84px; height: 84px; margin: 8px auto 6px; border-radius: 50%; border: 0; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.af-mic svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.af-mic.live { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(213, 243, 107, 0.5); } 50% { box-shadow: 0 0 0 18px rgba(213, 243, 107, 0); } }
+textarea { background: var(--bg); border: 1px solid var(--line-2); border-radius: var(--radius-sm); padding: 11px 12px; font-size: 16px; color: var(--ink); resize: vertical; }
+textarea:focus { outline: none; border-color: var(--accent); }
+.af-review { display: grid; gap: 8px; }
+.af-rv { display: flex; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 8px 10px; }
+.af-rv.off { opacity: 0.45; }
+.af-rv input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.af-rv-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.af-rv-main input { background: transparent; border: 0; padding: 2px 0; font-weight: 700; font-size: 14px; }
+.af-g { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; }
+.af-g input { width: 70px; text-align: right; padding: 8px; }
+
+/* ---------- quick log on nutrition page ---------- */
+.quicklog { display: grid; gap: 10px; }
+.ql-search {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 14px; border-radius: 14px; cursor: text;
+  background: var(--bg); border: 1px solid var(--line-2); color: var(--muted); font-size: 15px; text-align: left;
+}
+.ql-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ql-chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.ql-chips .pill { border: 0; cursor: pointer; white-space: nowrap; padding: 7px 12px; font-size: 12.5px; }
+.star-btn { border: 0; background: none; color: var(--line-2); font-size: 18px; cursor: pointer; padding: 2px 4px; }
+.star-btn.on { color: var(--warn); }
