@@ -10,6 +10,29 @@ export function setRerender(fn) { rerender = fn; }
 
 const ui = { trainDay: null, foodDate: null, actDate: null, lift: null, range: 12, histWeek: null };
 
+/* ---------- backups ---------- */
+function downloadBackup() {
+  const blob = new Blob([exportJSON()], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finn-fit-backup-${L.today()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  update((s) => { s.settings.lastExport = L.today(); });
+  toast('Backup saved — keep it in Files or iCloud');
+}
+
+/** Days since the last export, or null if never. */
+function backupAge() {
+  const last = get().settings.lastExport;
+  return last ? Math.round((L.parse(L.today()) - L.parse(last)) / 864e5) : null;
+}
+
+function hasData() {
+  const s = get();
+  return s.sessions.length > 0 || Object.keys(s.foods).length > 0;
+}
+
 /* ======================================================= HOME */
 export function home(el) {
   const s = get();
@@ -36,6 +59,12 @@ export function home(el) {
       <div class="card section row between" style="border-color:var(--accent-2)">
         <div><p class="eyebrow accent">In progress</p><h3>${esc(s.activeWorkout.name)}</h3></div>
         <button class="btn primary" data-resume>${icon.play} Resume</button>
+      </div>` : ''}
+
+    ${hasData() && (backupAge() == null || backupAge() >= 7) ? `
+      <div class="banner section" style="align-items:center">
+        <span style="flex:1">${backupAge() == null ? 'Your data only lives on this device. Save a backup so you never lose it.' : `Last backup was ${backupAge()} days ago. Save a fresh one.`}</span>
+        <button class="btn sm" data-backup>Back up</button>
       </div>` : ''}
 
     <section class="hero section">
@@ -124,6 +153,7 @@ export function home(el) {
 
   el.querySelector('[data-start]')?.addEventListener('click', (e) => W.start(e.currentTarget.dataset.start));
   el.querySelector('[data-resume]')?.addEventListener('click', () => W.open());
+  el.querySelector('[data-backup]')?.addEventListener('click', () => { downloadBackup(); rerender(); });
 }
 
 function weekStrip(mon) {
@@ -659,7 +689,8 @@ export function settings(el) {
       <div class="stack">
         <section class="card">
           <h3>Backups</h3>
-          <p class="sub small" style="margin-bottom:14px">Your data is saved in this browser on this device. Export a copy regularly, and before you restore one.</p>
+          <p class="sub small" style="margin-bottom:6px">Your data is saved on this device only. Export a copy regularly, and before you restore one.</p>
+          <p class="tiny muted" style="margin:0 0 14px">Last backup: ${backupAge() == null ? 'never' : backupAge() === 0 ? 'today' : `${backupAge()} day${backupAge() === 1 ? '' : 's'} ago`}</p>
           <div class="row wrap">
             <button class="btn primary" data-export>Export backup</button>
             <label class="btn">Restore…<input type="file" accept="application/json,.json" data-import hidden></label>
@@ -686,15 +717,7 @@ export function settings(el) {
       st.settings.cleared = f.cleared.checked;
     });
   });
-  el.querySelector('[data-export]').addEventListener('click', () => {
-    const blob = new Blob([exportJSON()], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `finn-fit-backup-${L.today()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    toast('Backup downloaded');
-  });
+  el.querySelector('[data-export]').addEventListener('click', () => { downloadBackup(); rerender(); });
   el.querySelector('[data-import]').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;

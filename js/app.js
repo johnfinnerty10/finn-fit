@@ -55,6 +55,9 @@ render();
 // Reopen an unfinished workout after a refresh.
 if (get().activeWorkout) W.open();
 
+// Ask the browser not to evict saved data (the phone holds the only copy).
+navigator.storage?.persist?.().catch(() => {});
+
 // Offline support when served over http(s).
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});

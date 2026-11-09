@@ -1,6 +1,6 @@
 // Finn Fit service worker: network-first for app files, cache fallback offline.
-const CACHE = 'finnfit-v2'; // bump when shipping changes
-const FILES = ['./', 'index.html', 'styles.css', 'manifest.webmanifest', 'icon.svg',
+const CACHE = 'finnfit-v3'; // bump when shipping changes
+const FILES = ['./', 'index.html', 'styles.css', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png',
   'js/app.js', 'js/store.js', 'js/logic.js', 'js/charts.js', 'js/ui.js', 'js/workout.js', 'js/views.js', 'js/legacy.js'];
 
 self.addEventListener('install', (e) => {
