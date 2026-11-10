@@ -144,6 +144,20 @@ const RAW = [
   ['Ham sandwich', 230, 12, 28, 7, 'sandwich', 180, ''],
   ['Chicken wrap', 210, 13, 22, 7, 'wrap', 230, ''],
   ['Full Irish breakfast', 220, 12, 10, 15, 'plate', 450, 'fry up english'],
+  ['Roast beef', 190, 29, 0, 8, 'portion', 120, 'sunday roast'],
+  ['Roast chicken dinner', 140, 12, 12, 5, 'plate', 500, 'sunday roast'],
+  ['Roast potatoes', 149, 2.9, 25, 4.5, 'portion', 200, ''],
+  ['Gravy', 35, 1, 5, 1.2, 'portion', 80, ''],
+  ['Steak and chips', 210, 15, 15, 10, 'plate', 450, 'steak frites'],
+  ['Beef stew', 95, 8, 7, 4, 'bowl', 400, 'irish stew'],
+  ["Shepherd's pie", 115, 6, 11, 5, 'portion', 350, 'cottage pie'],
+  ['Scrambled eggs on toast', 190, 10, 15, 10, 'plate', 250, ''],
+  ['Omelette', 154, 11, 1, 12, 'omelette', 150, ''],
+  ['Pancakes', 227, 6, 28, 10, 'pancake', 80, ''],
+  ['Chicken stir fry with noodles', 130, 9, 15, 4, 'plate', 400, ''],
+  ['Fried rice', 163, 4, 25, 5, 'portion', 300, 'egg fried rice'],
+  ['Fruit smoothie', 55, 0.8, 12, 0.3, 'glass', 300, ''],
+  ['Protein shake', 80, 13, 4, 1.5, 'shaker', 300, 'whey milk'],
 ];
 
 export const FOODS = RAW.map(([name, kcal, protein, carbs, fat, label, g, words]) => ({

@@ -662,8 +662,8 @@ export function settings(el) {
           </div>
         </section>
         <section class="card">
-          <h3>AI food estimates</h3>
-          <p class="sub small" style="margin-bottom:12px">Photo AI and full-sentence voice logging use Claude through your own Anthropic API key. Get one at console.anthropic.com → API keys. It stays on this device and is never included in backups. Each estimate costs roughly 2–4 cents.</p>
+          <h3>AI food estimates (optional)</h3>
+          <p class="sub small" style="margin-bottom:12px">Photo scan is free and runs on your phone — no key needed. Optionally, add an Anthropic API key for a more detailed Claude estimate (it also judges portion sizes) and full-sentence voice logging. Get one at console.anthropic.com → API keys; it stays on this device and is never included in backups. Each Claude estimate costs roughly 2–4 cents.</p>
           ${F.aiKey() ? `
             <p class="small" style="margin:0 0 10px">✓ Key saved (…${esc(F.aiKey().slice(-4))})</p>
             <button class="btn danger" data-aikey-rm>Remove key</button>`

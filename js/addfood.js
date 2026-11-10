@@ -260,29 +260,60 @@ export function openAddFood({ date, meal, start = 'search', onChange = () => {} 
       const hasKey = !!F.aiKey();
       body.innerHTML = `
         <button class="btn sm ghost" data-back>${I.back} Back</button>
-        <h3 style="margin:12px 0 4px">Photo estimate</h3>
-        <p class="small muted" style="margin:0 0 14px">Snap your plate and AI estimates each food, its portion and macros. You can adjust everything before it's added.</p>
+        <h3 style="margin:12px 0 4px">Photo scan</h3>
+        <p class="small muted" style="margin:0 0 14px">Snap your plate and Finn Fit spots the foods on it. Free and private — it runs on your phone, nothing is uploaded. Check the portions before adding.</p>
+        <div class="row" style="gap:8px">
+          <label class="btn primary lg" style="flex:1">${I.camera} Take photo<input type="file" accept="image/*" capture="environment" data-file hidden></label>
+          <label class="btn lg">Library<input type="file" accept="image/*" data-file hidden></label>
+        </div>
         ${hasKey ? `
-          <div class="row" style="gap:8px">
-            <label class="btn primary lg" style="flex:1">${I.camera} Take photo<input type="file" accept="image/*" capture="environment" data-file hidden></label>
-            <label class="btn lg">Library<input type="file" accept="image/*" data-file hidden></label>
-          </div>
-          <label class="field" style="margin-top:12px">Anything the photo won't show? (optional)
-            <input type="text" data-extra placeholder="e.g. cooked in a tbsp of oil, 2 sugars in the tea"></label>
-          <div data-out></div>`
-        : `<div class="banner"><span>AI estimates need your Anthropic API key. Add it once in <strong>Settings → AI food estimates</strong>; it stays on this phone.</span></div>
-           <a class="btn primary block" style="margin-top:12px" href="#settings">Open Settings</a>`}`;
+          <label class="check" style="margin-top:12px"><input type="checkbox" data-claude> Detailed estimate with Claude (uses your API key, estimates portions)</label>
+          <input type="text" data-extra placeholder="Anything the photo won't show? e.g. cooked in oil" style="margin-top:8px" hidden>` : ''}
+        <p class="tiny muted" data-firsttime style="margin:10px 0 0"></p>
+        <div data-out></div>`;
       body.querySelector('[data-back]').addEventListener('click', () => go(home));
+      const claude = body.querySelector('[data-claude]');
+      claude?.addEventListener('change', () => { body.querySelector('[data-extra]').hidden = !claude.checked; });
+      import('./vision.js').then(async (V) => {
+        const note = body.querySelector('[data-firsttime]');
+        if (note && !(await V.isCached())) note.textContent = 'First scan downloads the food recogniser (about 23 MB, once). Wi-Fi recommended.';
+      }).catch(() => {});
+
       body.querySelectorAll('[data-file]').forEach((inp) => inp.addEventListener('change', async () => {
         const file = inp.files[0]; if (!file) return;
         const out = body.querySelector('[data-out]');
         const url = URL.createObjectURL(file);
-        out.innerHTML = `<img src="${url}" alt="Your food photo" class="af-thumb"><p class="af-loading">Estimating your food…</p>`;
+        const status = (msg) => { out.innerHTML = `<img src="${url}" alt="Your food photo" class="af-thumb"><p class="af-loading">${esc(msg)}</p>`; };
+
+        if (claude?.checked) {
+          status('Estimating with Claude…');
+          try {
+            const res = await F.aiEstimate({ photo: file, text: body.querySelector('[data-extra]').value.trim() });
+            if (!res.items.length) { out.innerHTML = `<img src="${url}" alt="" class="af-thumb"><p class="small">${esc(res.note || 'No food found in that photo.')}</p>`; return; }
+            go(review, res.items, res.note, url);
+          } catch (e) { out.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message || 'Something went wrong.')}</p>`; }
+          return;
+        }
+
+        status('Spotting your food…');
         try {
-          const res = await F.aiEstimate({ photo: file, text: body.querySelector('[data-extra]').value.trim() });
-          if (!res.items.length) { out.innerHTML = `<img src="${url}" alt="" class="af-thumb"><p class="small">${esc(res.note || 'No food found in that photo.')}</p>`; return; }
-          go(review, res.items, res.note, url);
-        } catch (e) { out.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message || 'Something went wrong.')}</p>`; }
+          const V = await import('./vision.js');
+          const res = await V.recognise(file, (pct) => status(`Downloading food recogniser (first time only)… ${pct}%`));
+          if (res.notFood || !res.items.length) {
+            out.innerHTML = `<img src="${url}" alt="" class="af-thumb"><p class="small">No food spotted in that photo. Try a closer shot from above, or search instead.</p>`;
+            return;
+          }
+          const items = res.items.map((r) => {
+            const it = F.reviewItem(r.food.name, r.food.serving.g, r.food.per100, 'generic', '', r.food.serving);
+            it.on = r.on;
+            it.confidence = r.score < 0.3 ? 'low' : 'high';
+            return it;
+          });
+          go(review, items, 'Ticked = spotted in your photo. Untick anything wrong, tick anything it missed, and set the grams — portions are typical sizes.', url);
+        } catch (e) {
+          out.innerHTML = `<p class="small" style="color:var(--bad)">${navigator.onLine ? 'Couldn\'t run the food recogniser on this device.' : 'You\'re offline — the food recogniser needs internet the first time it\'s used.'} Try search or barcode instead.</p>`;
+          console.error(e);
+        }
       }));
     }
 
